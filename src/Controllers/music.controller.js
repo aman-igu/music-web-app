@@ -16,9 +16,12 @@ async function createMusic(req, res) {
     }
 
     try {
+        // Set URI to access the local file via the static route
+        const musicUri = `/uploads/${file.filename}`;
+
         const music = await MusicModel.create({
             title,
-            uri: file.originalname,   // replace with real URI after cloud upload
+            uri: musicUri,
             artist: req.user.id,
         });
 
@@ -69,4 +72,25 @@ async function createAlbum(req, res) {
     }
 }
 
-module.exports = { createMusic, createAlbum };
+// ─── Get All Music ───────────────────────────────────────────────────────────
+async function getAllMusic(req, res) {
+    try {
+        const music = await MusicModel.find().populate('artist', 'username email');
+        return res.status(200).json(music);
+    } catch (error) {
+        return res.status(500).json({ message: "Server error", error: error.message });
+    }
+}
+
+// ─── Get Artist Music ────────────────────────────────────────────────────────
+// Protected by: verifyToken, isArtist  (applied in router)
+async function getArtistMusic(req, res) {
+    try {
+        const music = await MusicModel.find({ artist: req.user.id }).populate('artist', 'username email');
+        return res.status(200).json(music);
+    } catch (error) {
+        return res.status(500).json({ message: "Server error", error: error.message });
+    }
+}
+
+module.exports = { createMusic, createAlbum, getAllMusic, getArtistMusic };
